@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="discord-qotd-mod-bot,discord-qotd-mod-bot_7659" />
+    <profile name="sbt 1" modules="DiscordBot.discord-qotd-mod-bot,discord-qotd-mod-bot,discord-qotd-mod-bot_7659" />
   </component>
 </project>

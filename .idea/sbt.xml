@@ -7,8 +7,8 @@
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
-            <option value="$USER_HOME$/Documents/source/jvm/scala/discord_qotd_and_mod_bot/discord-qotd-mod-bot" />
-            <option value="$USER_HOME$/Documents/source/jvm/scala/discord_qotd_and_mod_bot/discord-qotd-mod-bot/project" />
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/project" />
           </set>
         </option>
         <option name="sbtVersion" value="1.6.2" />

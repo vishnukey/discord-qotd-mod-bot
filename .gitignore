@@ -126,4 +126,4 @@ project/plugins/project/
 .lib/
 
 # End of https://www.toptal.com/developers/gitignore/api/sbt,intellij
-project/src/main/resources/token.txt
+src/main/resources/token.txt

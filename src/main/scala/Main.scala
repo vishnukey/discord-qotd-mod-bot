@@ -1,7 +1,6 @@
-import org.javacord.api.DiscordApiBuilder
-import org.javacord.api.interaction.SlashCommand
-
 import scala.io.Source
+import org.javacord.api.*
+import org.javacord.api.event.message.MessageCreateEvent
 
 @main def hello: Unit = {
 
@@ -10,11 +9,13 @@ import scala.io.Source
       case None => throw Exception("No token found")
     }
 
-  val api = DiscordApiBuilder().setToken(token).login().join()
-  SlashCommand.`with`("ping", "a simple ping pong command!").createGlobal(api).join()
+  val api = new DiscordApiBuilder().setToken(token).login.join
 
-  println("Hello world!")
-  println(msg)
+  // Add a listener which answers with "Pong!" if someone writes "!ping"
+  api.addMessageCreateListener((event: MessageCreateEvent) => {
+    def pingpong(event: MessageCreateEvent) = if (event.getMessageContent.equalsIgnoreCase("!ping")) event.getChannel.sendMessage("Pong!")
+    pingpong(event)
+  })
 }
 
 def msg = "I was compiled by Scala 3. :)"
