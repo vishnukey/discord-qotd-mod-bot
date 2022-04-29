@@ -12,7 +12,6 @@ object Main {
 
     val (api, slashcommands): (DiscordApi, Map[Long, Option[Command]]) = initializeStartup()
 
-
     //message listener attributes
     api.addMessageCreateListener(event => {
       event.getMessageContent match
@@ -23,30 +22,55 @@ object Main {
 
     api.addSlashCommandCreateListener(event => {
       val interaction = event.getSlashCommandInteraction
-      slashcommands.get(interaction.getCommandId).flatten match {
-        case Some(command) => command.handler(interaction)
-        case None => {}
-      }
+      slashcommands // Map[Long, Option[Command]]
+        .get(interaction.getCommandId) // -> Option[Option[Command]]
+        .flatten // -> Option[Command]
+        .foreach { _.handler(interaction) } // If it exists, apply it's handler
     })
   }
 }
 
 def initializeStartup(): (DiscordApi, Map[Long, Option[Command]]) = {
-  val token = Source.fromResource("token.txt").getLines().nextOption() match {
-    case Some(text) => text
-    case None => throw Exception("No token found")
-  }
+  val token =
+    Source
+      .fromResource("token.txt")
+      .getLines()
+      .nextOption()
+      .getOrThrow(Exception("No Token Found"))
 
-  val api = new DiscordApiBuilder().setToken(token).login.join
+  val api =
+    DiscordApiBuilder()
+      .setToken(token)
+      .login
+      .join
+
   val commands = initializeCommands(api)
   val globalCommands = api.getGlobalSlashCommands.join
-  if (globalCommands.size() == 0 || globalCommands.size() != commands.size) {
-      api.bulkOverwriteGlobalApplicationCommands(CollectionConverters.asJava(commands.map(_.slashCommand)))
-  }
+//  if (globalCommands.size() == 0 || globalCommands.size() != commands.size) {
+//      api.bulkOverwriteGlobalApplicationCommands(CollectionConverters.asJava(commands.map(_.slashCommand)))
+//  }
+//
+//  val commandIdMap =
+//    api
+//      .getGlobalSlashCommands
+//      .join
+//      .asScala.toSeq
+//      .map { x => (x.getId, x.getName) }
+//      .toMap
 
-  val commandIdMap = api.getGlobalSlashCommands.join.asScala.toSeq.map(x => (x.getId, x.getName)).toMap
-  val commandNameMap = commands.map(x => (x.name, x)).toMap
-  val commandMap = commandIdMap.map((id, name) => (id, commandNameMap.get(name)))
+  // this is /by far/ the worse way to do this, but it does save on an api call
+  val commandIdMap =
+    (if (globalCommands.size() == 0 || globalCommands.size() != commands.size) {
+      api.bulkOverwriteGlobalApplicationCommands(commands.map { _.slashCommand })
+      api.getGlobalSlashCommands.join
+    } else {
+      globalCommands
+    }).map { x => (x.getId, x.getName) }
+      .toMap
+
+
+  val commandNameMap = commands.map { x => (x.name, x) }.toMap
+  val commandMap = commandIdMap.map { (id, name) => (id, commandNameMap.get(name)) }
   (api, commandMap)
 }
 
@@ -75,8 +99,8 @@ def initializeCommands(api: DiscordApi/*, commands: Seq[Command]*/): List[Comman
           val args = interaction.getArguments
           val echo = args.get(0).getStringValue.toScala
           val priv = args.get(1).getStringValue.toScala
-          println(s"private messatge from test ${priv}")
-          interaction.createImmediateResponder().setContent(s"echoing: ${echo}").respond()
+          println(s"private messatge from test $priv")
+          interaction.createImmediateResponder().setContent(s"echoing: $echo").respond()
         },
       new CommandOOP("test3", "a command defined with inheritance"){
         override def handleInteraction(interaction: SlashCommandInteraction): Unit = {
@@ -117,13 +141,15 @@ enum CommandOption(val name:String, val description: String, val typ: SlashComma
 class Command(
                val name:String,
                val description: String = "",
-               val options: Seq[CommandOption] = Seq())
-             (val handler: (SlashCommandInteraction => Unit) = _ => {}){
-  val slashCommand: SlashCommandBuilder = SlashCommandBuilder()
-    .setName(name)
-    .setDescription(description)
-    .setOptions(CollectionConverters.asJava(options.map(_.commandOption)))
+               val options: Seq[CommandOption] = Seq()
+             )(val handler: SlashCommandInteraction => Unit = _ => {}){
+  val slashCommand: SlashCommandBuilder =
+    SlashCommandBuilder()
+      .setName(name)
+      .setDescription(description)
+      .setOptions(options.map { _.commandOption })
 }
+
 
 abstract class CommandOOP(val name: String, val description: String = "", val options: Seq[CommandOption] = Seq())
 {
@@ -136,4 +162,16 @@ given Conversion[CommandOOP, Command] with
 given Conversion[Command, CommandOOP] with
   def apply(cmd: Command): CommandOOP = new CommandOOP(cmd.name, cmd.description, cmd.options){
     override def handleInteraction(interaction: SlashCommandInteraction): Unit = cmd.handler(interaction)
+  }
+
+given [A]: Conversion[Seq[A], java.util.List[A]] with
+  def apply(s: Seq[A]): java.util.List[A] = CollectionConverters.asJava(s)
+
+given [A]: Conversion[java.util.List[A], Seq[A]] with
+  def apply(l: java.util.List[A]): Seq[A] = l.asScala.toSeq
+
+extension[A] (opt: Option[A])
+  def getOrThrow(e: => Exception): A = opt match {
+    case Some(x) => x
+    case None => throw e
   }
