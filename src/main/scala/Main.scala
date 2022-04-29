@@ -7,26 +7,28 @@ import scala.jdk.javaapi.CollectionConverters
 import scala.jdk.OptionConverters.*
 import scala.jdk.CollectionConverters.*
 
-@main def hello: Unit = {
+object Main {
+  @main def entry: Unit = {
 
-  val (api, slashcommands):(DiscordApi, Map[Long, Option[Command]]) = initializeStartup()
+    val (api, slashcommands): (DiscordApi, Map[Long, Option[Command]]) = initializeStartup()
 
 
-  //message listener attributes
-  api.addMessageCreateListener(event => {
-    event.getMessageContent match
-      case "!ping" => doPing(event)
-      case "!help" => doHelpSummary(event)
-      case _ => event.getChannel.sendMessage("Invalid Command")
-  })
+    //message listener attributes
+    api.addMessageCreateListener(event => {
+      event.getMessageContent match
+        case "!ping" => doPing(event)
+        case "!help" => doHelpSummary(event)
+        case _ => event.getChannel.sendMessage("Invalid Command")
+    })
 
-  api.addSlashCommandCreateListener(event => {
-    val interaction = event.getSlashCommandInteraction
-    slashcommands.get(interaction.getCommandId).flatten match {
-      case Some(command) => command.handler(interaction)
-      case None => {}
-    }
-  })
+    api.addSlashCommandCreateListener(event => {
+      val interaction = event.getSlashCommandInteraction
+      slashcommands.get(interaction.getCommandId).flatten match {
+        case Some(command) => command.handler(interaction)
+        case None => {}
+      }
+    })
+  }
 }
 
 def initializeStartup(): (DiscordApi, Map[Long, Option[Command]]) = {
@@ -82,7 +84,7 @@ def initializeCommands(api: DiscordApi/*, commands: Seq[Command]*/): List[Comman
         }
       }
     )
-  commands
+   commands
 }
 
 enum CommandOption(val name:String, val description: String, val typ: SlashCommandOptionType)
