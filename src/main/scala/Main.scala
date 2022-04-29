@@ -61,63 +61,77 @@ def doHelpSummary(event: MessageCreateEvent): Unit = {
   * Bulk writing commands, as advised to ideally only do 1 request
   */
 def initializeCommands(api: DiscordApi/*, commands: Seq[Command]*/): List[Command] = {
-//  List(
-//    SlashCommandBuilder().setName("server").setDescription("A command for the server")
-//    )
-  //List(Command("server", "a command for the server"))
-    val commands = List(
-      Command("server", "a command for the server"),
+    val commands: List[Command] = List(
+      Command("server", "a command for the server")(),
       Command(
-        "test",
-        "a command with arguments",
-        Seq(
-          SlashCommandOption.create(SlashCommandOptionType.STRING, "echo", "to be echoed"),
-          SlashCommandOption.create(SlashCommandOptionType.STRING, "private", "won't be echoed")
-        ),
-        interaction => {
+        name ="test",
+        description ="a command with arguments",
+        options = Seq(
+          CommandOption.Str("echo", "to be echoed"),
+          CommandOption.Str("private", "won't be echoed")
+        )) { interaction =>
           val args = interaction.getArguments
           val echo = args.get(0).getStringValue.toScala
           val priv = args.get(1).getStringValue.toScala
           println(s"private messatge from test ${priv}")
           interaction.createImmediateResponder().setContent(s"echoing: ${echo}").respond()
+        },
+      new CommandOOP("test3", "a command defined with inheritance"){
+        override def handleInteraction(interaction: SlashCommandInteraction): Unit = {
+          interaction.createImmediateResponder().setContent("Hello from Oop!")
         }
-      )
+      }
     )
   commands
-
-//  val commands = List(
-//    SlashCommandBuilder().setName("server").setDescription("A command for the server")
-//  )
-//
-//  api.bulkOverwriteGlobalApplicationCommands(CollectionConverters.asJava(commands)).join()
-//  val commands = Seq(
-//    Command("server", "a command for the server")
-//  )
-//  api.bulkOverwriteGlobalApplicationCommands(
-//    CollectionConverters.asJava(commands.map(_.slashCommand))
-//  )
-//  api.addSlashCommandCreateListener(event => {
-//    val interaction = event.getSlashCommandInteraction
-//    val commandName = interaction.getCommandName
-//    commands.filter(_.name == commandName).foreach(_.handler(interaction))
-//  })
 }
+
+enum CommandOption(val name:String, val description: String, val typ: SlashCommandOptionType)
+{
+  case Boolean (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.BOOLEAN)
+  case Decimal (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.DECIMAL)
+  case Long (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.LONG)
+  case Mentionable (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.MENTIONABLE)
+  case Role (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.ROLE)
+  case Str (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.STRING)
+  case Sub_Command (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.SUB_COMMAND)
+  case Sub_Command_Group (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.SUB_COMMAND_GROUP)
+  case Unknown (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.UNKNOWN)
+  case User (private val n: String, private val desc: String)
+    extends CommandOption(n, desc, SlashCommandOptionType.USER)
+
+  val commandOption: SlashCommandOption = SlashCommandOption.create(typ, name, description)
+}
+
 
 class Command(
                val name:String,
                val description: String = "",
-               val options: Seq[SlashCommandOption] = Seq(),
-               val handler: (SlashCommandInteraction => Unit) = _ => {}){
-  val slashCommand = SlashCommandBuilder()
+               val options: Seq[CommandOption] = Seq())
+             (val handler: (SlashCommandInteraction => Unit) = _ => {}){
+  val slashCommand: SlashCommandBuilder = SlashCommandBuilder()
     .setName(name)
     .setDescription(description)
-    .setOptions(CollectionConverters.asJava(options))
+    .setOptions(CollectionConverters.asJava(options.map(_.commandOption)))
 }
 
-@command(desc="a command with arguments")
-def test(
-          echo:String @description("to be changed"),
-          `private`:String @description("won't be echoed")
-        ) = {
-  . . . .
+abstract class CommandOOP(val name: String, val description: String = "", val options: Seq[CommandOption] = Seq())
+{
+  def handleInteraction(interaction: SlashCommandInteraction): Unit
 }
+
+given Conversion[CommandOOP, Command] with
+  def apply(cmd: CommandOOP): Command = Command(cmd.name, cmd.description, cmd.options)(cmd.handleInteraction)
+
+given Conversion[Command, CommandOOP] with
+  def apply(cmd: Command): CommandOOP = new CommandOOP(cmd.name, cmd.description, cmd.options){
+    override def handleInteraction(interaction: SlashCommandInteraction): Unit = cmd.handler(interaction)
+  }
