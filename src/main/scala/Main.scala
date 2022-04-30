@@ -31,7 +31,8 @@ object Main {
     api.addSlashCommandCreateListener(event => {
       val interaction = event.getSlashCommandInteraction
       println(s"Got slash event! ${interaction.getCommandId} ${interaction.getCommandName}")
-      slashcommands get interaction.getCommandId foreach { _.handler(interaction) }
+      //slashcommands get interaction.getCommandId foreach { _.handler(interaction) }
+      commands.map {x => (x.name, x) }.toMap get interaction.getCommandName foreach { _.handler(interaction) }
     })
   }
 }
