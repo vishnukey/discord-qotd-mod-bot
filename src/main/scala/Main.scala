@@ -1,7 +1,8 @@
 import scala.io.Source
 import org.javacord.api.*
+import org.javacord.api.entity.server.Server
 import org.javacord.api.event.message.MessageCreateEvent
-import org.javacord.api.interaction.{ApplicationCommand, SlashCommand, SlashCommandBuilder, SlashCommandInteraction, SlashCommandOption, SlashCommandOptionType}
+import org.javacord.api.interaction.{ApplicationCommand, SlashCommand, SlashCommandBuilder, SlashCommandInteraction, SlashCommandOption, SlashCommandOptionBuilder, SlashCommandOptionType}
 
 import scala.jdk.javaapi.CollectionConverters
 import scala.jdk.OptionConverters.*
@@ -9,8 +10,12 @@ import scala.jdk.CollectionConverters.*
 
 object Main {
   @main def entry(): Unit = {
-
-    val slashcommands: Map[Long, Command] = prepareCommands()
+    api.getServers.forEach(println)
+    //val slashcommands: Map[Long, Command] = prepareCommands()
+    val slashcommands = prepareServerCommands(
+      api.getServerById().asScala.getOrThrow(Exception("Not in the testing server")),
+      commands
+    )
 
     //message listener attributes
     api.addMessageCreateListener(event => {
@@ -22,7 +27,7 @@ object Main {
 
     api.addSlashCommandCreateListener(event => {
       val interaction = event.getSlashCommandInteraction
-      slashcommands get(interaction.getCommandId) foreach { _.handler(interaction) }
+      slashcommands get interaction.getCommandId foreach { _.handler(interaction) }
     })
   }
 }
@@ -66,16 +71,29 @@ lazy val commands: Seq[Command] = Seq(
 )
 
 def prepareCommands(): Map[Long, Command] = {
-  val globalCommands = updateCommands(commands)
+  val globalCommands = updateGlobalCommands(commands)
   genCommandIdMap(commands, globalCommands)
 }
 
-def updateCommands(commands: Seq[Command]): Seq[SlashCommand] = {
+def prepareServerCommands(server: Server, commands:Seq[Command]): Map[Long, Command] = {
+  val serverCommands = updateServerCommands(server, commands)
+  genCommandIdMap(commands, serverCommands)
+}
+
+def updateGlobalCommands(commands: Seq[Command]): Seq[SlashCommand] = {
   val globalCommands = api.getGlobalSlashCommands.join
   if (globalCommands.size != commands.size) {
     api.bulkOverwriteGlobalApplicationCommands(commands.map { _.slashCommand }).join
     api.getGlobalSlashCommands.join
   } else globalCommands
+}
+
+def updateServerCommands(server:Server, commands: Seq[Command]): Seq[SlashCommand] = {
+  val serverCommands = api.getServerSlashCommands(server).join
+  if (serverCommands.size != commands.size) {
+    api.bulkOverwriteServerApplicationCommands(server, commands.map { _.slashCommand }).join
+    api.getServerSlashCommands(server).join
+  } else serverCommands
 }
 
 def genCommandIdMap(localCommands: Seq[Command], globalCommands: Seq[SlashCommand]): Map[Long, Command] = {
@@ -113,7 +131,6 @@ class Command(val name:String,
 abstract class CommandOOP(val name: String, val description: String = "", val options: Seq[CommandOption] = Seq())
 {
   def handleInteraction(interaction: SlashCommandInteraction): Unit
-
   val slashCommand: SlashCommandBuilder =
     SlashCommandBuilder()
       .setName(name)
