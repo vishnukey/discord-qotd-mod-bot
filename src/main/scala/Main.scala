@@ -10,12 +10,15 @@ import scala.jdk.CollectionConverters.*
 
 object Main {
   @main def entry(): Unit = {
-    api.getServers.forEach(println)
-    //val slashcommands: Map[Long, Command] = prepareCommands()
+    val testServer = api.getServerById().toScala.getOrThrow(Exception("Not in the testing server"))
+    //api.getServers.forEach(println)
+    //println(s"permissions: ${api.getServerApplicationCommandPermissions(testServer).join}")
+//    val slashcommands: Map[Long, Command] = prepareCommands()
     val slashcommands = prepareServerCommands(
-      api.getServerById().asScala.getOrThrow(Exception("Not in the testing server")),
+      testServer,
       commands
     )
+    println(slashcommands)
 
     //message listener attributes
     api.addMessageCreateListener(event => {
@@ -27,6 +30,7 @@ object Main {
 
     api.addSlashCommandCreateListener(event => {
       val interaction = event.getSlashCommandInteraction
+      println(s"Got slash event! ${interaction.getCommandId} ${interaction.getCommandName}")
       slashcommands get interaction.getCommandId foreach { _.handler(interaction) }
     })
   }
@@ -99,12 +103,16 @@ def updateServerCommands(server:Server, commands: Seq[Command]): Seq[SlashComman
 def genCommandIdMap(localCommands: Seq[Command], globalCommands: Seq[SlashCommand]): Map[Long, Command] = {
   val idMap = globalCommands.map { x => (x.getId, x.getName) }.toMap
   val nameMap = localCommands.map { x => (x.name, x) }.toMap
-  idMap.flatMap { (id, name) => // associate the command of every name recognize to its ID
+  val commandMap = idMap.flatMap { (id, name) => // associate the command of every name recognize to its ID
     nameMap.get(name) match {
       case Some(n) => Map(id -> n)
       case None    => Map()
     }
   }
+  println(idMap)
+  println(nameMap)
+  println(commandMap)
+  commandMap
 }
 
 // Add a listener which answers with "Pong!" if someone writes "!ping"
@@ -116,7 +124,7 @@ def doHelpSummary(event: MessageCreateEvent): Unit = {
   event.getChannel.sendMessage("insert summary of commands here.")
 }
 
-class Command(val name:String,
+case class Command(val name:String,
               val description: String = "",
               val options: Seq[CommandOption] = Seq()
              )
