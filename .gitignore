@@ -127,3 +127,4 @@ project/plugins/project/
 
 # End of https://www.toptal.com/developers/gitignore/api/sbt,intellij
 src/main/resources/token.txt
+.obsidian/
