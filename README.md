@@ -92,13 +92,62 @@ allows administrators to indicate what time of day, and in what time zone they w
 	- returns how long until the next qotd is posted as of when this command was run in hh:mm:ss
 
 
+
+#### Ticketing
+##### Config
+- default_setup
+- set_ticket_creation_channel
+- set_ticket_logging_channel
+- make_ticket_creation_channel
+- make_ticket_logging_channel
+##### Ticket
+- make_ticket
+- make_ticket_restrict
+- close_ticket
+- reopen_ticket
+- open_ticket
+- inprogress_ticket
+
+
 ### Bot Passive Functionality
-#####QOTD
+##### QOTD
 - if 3+ questions from the same user have been rejected, bot will send a warning out in the verification channel with the user-id & username so that mods are aware and can catch spamming / trolls
 - if the question of the day question queue is running low, bot will send a message in the qotd-channel asking users to submit questions
+	- if questions are pending approval, bot could send a message in verification channel for mods reminding them to go through them
+	- if there are simply low question numbers, send it in qotd
 - will send (1) "uh oh, we're empty" message the day after the queue empties, and then not again, to avoid spamming the qotd channel
+	- perhaps an optional toggle to allow this to be repeated?
+
+##### Ticketing
+- Existing open channel with a button that opens a ticket
+	- channel restricted from sending messages for anyone except mods, keeps button message visible and easy to find
+- Secondary channel for active tickets
+	- if private threading available this will be the *only* channel
+		- private threads are only those invited + moderator so bot will automatically on ticket creation open a thread with just the user created and the mods
+	- if no private threading this will be another channel, probably w/ naming convention "ticket-#" + ticket internal number 
+		- channel created with restriction access of only mods and ticket creator
+		- upon ticket being marked closed channel will be deleted
+			- history in ticket-logs
+			- if ticket needs to be reopened new channel created
+				- logging will go to original logging thread if possible, otherwise second thread with indication ticket was reopened.
+- ticket-logs
+	- each ticket will have its own thread here, ticket thread name will include internal id and username & status, all messages recorded here as well, esp. if not private thread enabled
+	-  thread renamed upon status change
+		- "opened" - initial bot automated ticket created
+		- "in progress" - mods and ticketee are discussing
+		- "closed" - ticket has been marked resolved
+	- 
+
 
 ### Bot privacy:
 #### QOTD
 - bot tracks submissions by userid in the background, but only for distribution and possible spam detection
 	- usernames associated with questions will only be visible to moderators after 3+ questions have been rejected by the moderators
+	
+#### Ticketing 
+- All tickets are opened and accessible by all mods & ticketee to ensure things can be handled most fairly
+- All ticket conversations logged in a #ticket-logs channel to ensure history of ticket and how it was dealt with
+- tickets therefore cannot be anonymous & all involvement with ticket will be tied to discord account/username
+	- however, an override command can be used to exclude a mod if a ticket is being opened *bc of a mod* for safety reasons
+
+
