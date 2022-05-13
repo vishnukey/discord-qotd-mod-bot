@@ -113,11 +113,3 @@ class Command(
     .setDescription(description)
     .setOptions(CollectionConverters.asJava(options))
 }
-
-@command(desc="a command with arguments")
-def test(
-          echo:String @description("to be changed"),
-          `private`:String @description("won't be echoed")
-        ) = {
-  . . . .
-}
