@@ -7,10 +7,12 @@ import scala.jdk.javaapi.CollectionConverters
 import scala.jdk.OptionConverters.*
 import scala.jdk.CollectionConverters.*
 
-@main def main: Unit = {
-  val token = Source.fromResource("token.txt").getLines().nextOption() match {
-    case Some(text) => text
-    case None => throw Exception("No token found")
+object Main {
+  @main def main: Unit = {
+    val token = Source.fromResource("token.txt").getLines().nextOption() match {
+      case Some(text) => text
+      case None => throw Exception("No token found")
+    }
+    val api = new DiscordApiBuilder().setToken(token).login.join
   }
-  val api = new DiscordApiBuilder().setToken(token).login.join
 }
