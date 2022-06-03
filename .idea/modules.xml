@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DiscordBot.discord-qotd-mod-bot.iml" filepath="$PROJECT_DIR$/.idea/modules/DiscordBot.discord-qotd-mod-bot.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/project.discord-qotd-mod-bot-build.iml" filepath="$PROJECT_DIR$/.idea/modules/project.discord-qotd-mod-bot-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/discord-qotd-mod-bot.iml" filepath="$PROJECT_DIR$/.idea/modules/discord-qotd-mod-bot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/discord-qotd-mod-bot-build.iml" filepath="$PROJECT_DIR$/.idea/modules/discord-qotd-mod-bot-build.iml" />
     </modules>
   </component>
 </project>
